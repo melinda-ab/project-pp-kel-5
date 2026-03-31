@@ -4,7 +4,7 @@ A research pipeline implementing the phases described in your proposal, optimize
 
 ---
 
-## 🛠 Architecture & Phases
+## Architecture & Phases
 
 The pipeline executes the following logic as defined in `pipeline.py`:
 
@@ -17,18 +17,10 @@ The pipeline executes the following logic as defined in `pipeline.py`:
 
 ---
 
-## 📊 Evaluation Metrics
+## Evaluation Metrics
 
 | Metric | Formula / Logic |
 | :--- | :--- |
 | **RPA** | Raw Pitch Accuracy: % of frames where $|error| < 50$ cents. |
 | **Mean Error** | The average absolute deviation in cents for all voiced frames. |
 | **Cent Calculation** | $1200 \times \log_2(f_{est} / f_{gt})$ |
-
----
-
-## 🚀 Quick Start
-
-### Installation
-```bash
-pip install numpy scipy librosa soundfile matplotlib tqdm
