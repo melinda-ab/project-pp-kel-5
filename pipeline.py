@@ -16,10 +16,7 @@ import matplotlib
 matplotlib.use("Agg") 
 import matplotlib.pyplot as plt
 
-# ─────────────────────────────────────────────────────────────
 # 1. Configuration & Mapping
-# ─────────────────────────────────────────────────────────────
-
 NOTE_HZ = {
     'E2': 82.41,  'F2': 87.31,  'G2': 98.00,  'A2': 110.00, 'B2': 123.47,
     'C3': 130.81, 'D3': 146.83, 'E3': 164.81, 'F3': 174.61, 'G3': 196.00, 
@@ -33,10 +30,11 @@ class PipelineConfig:
     dataset_dir: str = "dataset"
     output_dir: str = "results"
     sample_rate: int = 16_000
-    # Hanya 2 Skenario: Standard dan High
+    # Skenario noise utama (SNR dalam dB): makin kecil/negatif = makin noisy
     noise_scenarios: Dict[str, float] = field(default_factory=lambda: {
-        "standard_mic": 5.0,   
-        "high_noise": 0.0,     
+        "standard_mic": 5.0,
+        "high_noise": 0.0,
+        "extreme_noise": -5.0,
     })
     # Alpha 0.6 untuk menjaga harmonik gitar akustik
     wiener_alpha: float = 0.6  
@@ -49,10 +47,8 @@ CFG = PipelineConfig()
 logging.basicConfig(level=logging.INFO, format="[%(levelname)s] %(message)s")
 log = logging.getLogger(__name__)
 
-# ─────────────────────────────────────────────────────────────
-# 2. Logic Modules
-# ─────────────────────────────────────────────────────────────
 
+# 2. Logic Modules
 def apply_wiener_filter(audio, cfg):
     """Optimal Linear Filtering - Gain Masking."""
     D = librosa.stft(audio, n_fft=cfg.sg_n_fft, hop_length=cfg.sg_hop_length)
@@ -74,10 +70,7 @@ def calculate_metrics(f_est, f_gt, tol):
     err = np.abs(1200.0 * np.log2(f_est[mask] / f_gt[mask]))
     return float(np.mean(err < tol)), float(np.mean(err))
 
-# ─────────────────────────────────────────────────────────────
 # 3. Reporting Module
-# ─────────────────────────────────────────────────────────────
-
 def generate_reports(all_metrics_list, out_path):
     df = pd.DataFrame(all_metrics_list)
     summary = df.groupby('scenario').agg({
@@ -112,10 +105,7 @@ def generate_reports(all_metrics_list, out_path):
     print(summary.to_string(index=False))
     print("="*60 + "\n")
 
-# ─────────────────────────────────────────────────────────────
 # 4. Main Run
-# ─────────────────────────────────────────────────────────────
-
 def run_pipeline(cfg):
     out_path = Path(cfg.output_dir)
     out_path.mkdir(parents=True, exist_ok=True)
@@ -140,7 +130,7 @@ def run_pipeline(cfg):
             noise = np.random.randn(len(y_norm)) * math.sqrt((np.mean(y_norm**2)) / (10**(snr/10)))
             noisy = np.clip(y_norm + noise, -1.0, 1.0)
             denoised = apply_wiener_filter(noisy, cfg)
-            
+
             f0_b = detect_pitch(noisy, cfg)
             f0_p = detect_pitch(denoised, cfg)
             f0_gt = np.full(len(f0_b), target_hz)
@@ -152,7 +142,7 @@ def run_pipeline(cfg):
                 "baseline": {"rpa": rpa_b, "err": err_b},
                 "wiener": {"rpa": rpa_p, "err": err_p}
             }
-            
+
             aggregate_data.append({
                 "file": p.stem, "scenario": label,
                 "base_rpa": rpa_b, "prop_rpa": rpa_p,
