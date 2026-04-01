@@ -1,26 +1,42 @@
-# Robust Pitch Detection — Experimental Pipeline
+# Evaluasi Performa Wiener Filter dalam Meningkatkan Akurasi Estimasi Pitch pada Sinyal Audio Noise
 
-A research pipeline implementing the phases described in your proposal, optimized for monophonic audio analysis using Wiener filtering and pYIN.
+## Project Overview
+Repositori ini berisi Final Project Kelompok 5 untuk mata kuliah Pengenalan Pola.
+
+Kami mengevaluasi ketahanan algoritma pitch detection pYIN (Probabilistic YIN) melalui sistem yang diusulkan menggunakan Wiener Filter di domain frekuensi. Dengan kriteria minimalisasi kesalahan berbasis MSE, sistem ini dirancang untuk mencari titik keseimbangan optimal antara retensi integritas sinyal dan penekanan derau (noise).
+
+Video presentasi dan paper dapat diakses melalui tautan berikut:
+https://drive.google.com/drive/folders/1xx7c5Rt5r4zOVa6U5WX7h6X47955n_7k?hl=ID
+
+---
+
+## Contributors
+Kelompok 5:
+- Gilbert Nathaniel
+- Dhimas Putra Sulistio
+- Bobby Rahman Hartanto
+- Melinda Annastasia B.
+- Arnoldus Dharma W. M. 
 
 ---
 
 ## Architecture & Phases
 
-The pipeline executes the following logic as defined in `pipeline.py`:
+Logika utama dijalankan melalui 'pipeline.py' dengan tahapan berikut:
 
-1.  **Phase 1: Dataset Preparation** Loads `.wav` files, trims silence at 30dB, and normalizes peak amplitude to 0.89. Ground truth is derived from the filename (e.g., "A4" maps to 440.0Hz).
-2.  **Phase 2: Noise Injection** Adds AWGN (Additive White Gaussian Noise) based on specific SNR targets.
-3.  **Phase 3: Denoising (Wiener Filter)** Uses an **Optimal Linear Wiener Filter**. It estimates noise power ($P_n$) from the bottom 20% energy frames and applies a gain mask: 
-    $$\text{Gain} = \frac{|S|^2 - \alpha P_n}{|S|^2}$$
-4.  **Phase 4: Pitch Detection** Uses `librosa.pyin` for fundamental frequency ($f_0$) estimation on both the noisy baseline and the denoised signal.
-5.  **Phase 5: Evaluation** Calculates accuracy by comparing estimated $f_0$ against the target note frequency.
+1. **Preprocessing**: Load `.wav`, trim silence (30dB), dan normalisasi amplitudo ke 0.89.
+2. **Noise Injection**: Penambahan AWGN (Additive White Gaussian Noise) sesuai target SNR.
+3. **Denoising**: Penerapan **Optimal Linear Wiener Filter** untuk menekan derau:
+   $$\text{Gain} = \frac{|S|^2 - \alpha P_n}{|S|^2}$$
+4. **Pitch Detection**: Estimasi $f_0$ menggunakan `librosa.pyin` pada sinyal asli & denoised.
+5. **Evaluation**: Komparasi hasil estimasi terhadap *ground truth* dari filename.
 
 ---
 
 ## Evaluation Metrics
 
-| Metric | Formula / Logic |
-| :--- | :--- |
-| **RPA** | Raw Pitch Accuracy: % of frames where $|error| < 50$ cents. |
-| **Mean Error** | The average absolute deviation in cents for all voiced frames. |
-| **Cent Calculation** | $1200 \times \log_2(f_{est} / f_{gt})$ |
+| Metrik | Deskripsi | Formula |
+| :--- | :--- | :--- |
+| **RPA** | Raw Pitch Accuracy | % frame dengan $|error| < 50$ cents |
+| **Mean Error** | Rata-rata deviasi | Mean absolute error pada voiced frames |
+| **Cents** | Skala logaritmik | $1200 \times \log_2(f_{est} / f_{gt})$ |
